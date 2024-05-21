@@ -73,8 +73,8 @@ module ara_system import axi_pkg::*; import ara_pkg::*; #(
   //  Ara and Ariane  //
   //////////////////////
 
-  import acc_pkg::accelerator_req_t;
-  import acc_pkg::accelerator_resp_t;
+  // import acc_pkg::accelerator_req_t;
+  // import acc_pkg::accelerator_resp_t;
 
   // Accelerator ports
   logic                                 acc_resp_valid;
