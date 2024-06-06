@@ -26,3 +26,4 @@ add wave -noupdate -group Ara -group vlsu /ara_tb/dut/i_ara_soc/i_system/i_ara/i
 
 add wave -noupdate -group Ara -group ring_buffer /ara_tb/dut/i_ara_soc/i_system/i_ara/i_ring_buffer/*
 add wave -noupdate -group Ara -group pre_decoder /ara_tb/dut/i_ara_soc/i_system/i_ara/i_pre_decoder/*
+add wave -noupdate -group Ara -group lw_decoder /ara_tb/dut/i_ara_soc/i_system/i_ara/i_lw_decoder/*

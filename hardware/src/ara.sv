@@ -195,6 +195,21 @@ module ara import ara_pkg::*; #(
     .csr_sync_o        ()
   );
 
+  x_issue_req_t lw_req;
+  x_issue_resp_t lw_resp;
+  assign lw_req.instr = core_v_xif_req_i.issue_req_instr;
+  assign lw_req.hartid = core_v_xif_req_i.issue_req_hartid;
+  assign lw_req.id = core_v_xif_req_i.issue_req_id;
+
+  ara_lw_decoder #(
+    .x_issue_req_t(x_issue_req_t),
+    .x_issue_resp_t(x_issue_resp_t)
+    ) i_lw_decoder (
+    .issue_req_i (lw_req),
+    .issue_resp_o (lw_resp),
+    .instruction_o ()
+    );
+
   logic new_instr;
   logic load_next_instr;
   logic buffer_full;
@@ -281,10 +296,14 @@ module ara import ara_pkg::*; #(
     // issue response
     if (core_v_xif_req_i.issue_valid && !buffer_full && !(core_v_xif_req_i.commit_valid && core_v_xif_req_i.commit_commit_kill))
       core_v_xif_resp_o.issue_ready = 1'b1;
-    core_v_xif_resp_o.issue_resp_accept         = core_v_xif_resp_decoder2.issue_resp_accept;
-    core_v_xif_resp_o.issue_resp_writeback      = core_v_xif_resp_decoder2.issue_resp_writeback;
-    core_v_xif_resp_o.issue_resp_register_read  = core_v_xif_resp_decoder2.issue_resp_register_read;
-    core_v_xif_resp_o.issue_resp_is_vfp         = core_v_xif_resp_decoder2.issue_resp_is_vfp;
+    // core_v_xif_resp_o.issue_resp_accept         = core_v_xif_resp_decoder2.issue_resp_accept;
+    // core_v_xif_resp_o.issue_resp_writeback      = core_v_xif_resp_decoder2.issue_resp_writeback;
+    // core_v_xif_resp_o.issue_resp_register_read  = core_v_xif_resp_decoder2.issue_resp_register_read;
+    // core_v_xif_resp_o.issue_resp_is_vfp         = core_v_xif_resp_decoder2.issue_resp_is_vfp;
+    core_v_xif_resp_o.issue_resp_accept         = lw_resp.accept;
+    core_v_xif_resp_o.issue_resp_writeback      = lw_resp.writeback;
+    core_v_xif_resp_o.issue_resp_register_read  = lw_resp.register_read;
+    core_v_xif_resp_o.issue_resp_is_vfp         = lw_resp.is_vfp;
 
     // result
     core_v_xif_resp_o.result_rd = return_rd;
