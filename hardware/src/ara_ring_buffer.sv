@@ -9,7 +9,7 @@
 
 module ara_ring_buffer #(
 	    parameter int            unsigned ID_WIDTH = 8,
-	    parameter int unsigned DEPTH = 1, // Make sure that there are never more ids stored then the depth of the buffer
+	    parameter int unsigned DEPTH = 2, // Make sure that there are never more ids stored then the depth of the buffer
 	    parameter type readregflags_t = logic,
 	    parameter type dtype = logic,
 	    // DO NOT OVERWRITE THIS PARAMETER

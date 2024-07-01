@@ -7,40 +7,40 @@
 // Handler to take care of the XIF signals
 
 module ara_xif_handler #(
-	parameter int 		unsigned NrLanes 		= 0,
-	parameter int 		unsigned HARTID_WIDTH 	= ariane_pkg::NR_RGPR_PORTS,
-	parameter int 		unsigned ID_WIDTH 		= ariane_pkg::TRANS_ID_BITS,
-	parameter type 		readregflags_t 			= logic,
+    parameter int 		unsigned NrLanes 		= 0,
+    parameter int 		unsigned HARTID_WIDTH 	= ariane_pkg::NR_RGPR_PORTS,
+    parameter int 		unsigned ID_WIDTH 		= ariane_pkg::TRANS_ID_BITS,
+    parameter type 		readregflags_t 			= logic,
     parameter type 		writeregflags_t 		= logic,
-    parameter type 		x_req_t 				= core_v_xif_pkg::x_req_t,
-    parameter type 		x_resp_t 				= core_v_xif_pkg::x_resp_t,
-    parameter type 		x_issue_req_t 			= core_v_xif_pkg::x_issue_req_t,
-    parameter type 		x_issue_resp_t 			= core_v_xif_pkg::x_issue_resp_t,
+    parameter type 		x_req_t 				  = core_v_xif_pkg::x_req_t,
+    parameter type 		x_resp_t 				  = core_v_xif_pkg::x_resp_t,
+    parameter type 		x_issue_req_t 		= core_v_xif_pkg::x_issue_req_t,
+    parameter type 		x_issue_resp_t 		= core_v_xif_pkg::x_issue_resp_t,
     parameter type 		x_result_t 				= core_v_xif_pkg::x_result_t,
     parameter type 		x_acc_resp_t 			= core_v_xif_pkg::x_acc_resp_t,
     parameter type 		csr_sync_t 				= logic,
     parameter type 		instr_pack_t 			= logic
 	) (
-	// Clock and Reset
-	input logic 				clk_i,
-	input logic 				rst_ni,
-	// XIF
-	input  x_req_t            	core_v_xif_req_i,
-    output x_resp_t           	core_v_xif_resp_o,
+  	// Clock and Reset
+  	input logic 				                   clk_i,
+  	input logic 				                   rst_ni,
+  	// XIF
+  	input  x_req_t            	           core_v_xif_req_i,
+    output x_resp_t           	           core_v_xif_resp_o,
     // <-> Ara Dispatcher
-    output instr_pack_t 		instruction_o,
-    output logic 				instruction_valid_o,
-    input  logic 				instruction_ready_i,
-    input  csr_sync_t 			csr_sync_i,
-    input  x_resp_t 			core_v_xif_resp_i,
+    output instr_pack_t 		               instruction_o,
+    output logic 				                   instruction_valid_o,
+    input  logic 				                   instruction_ready_i,
+    input  csr_sync_t 			               csr_sync_i,
+    input  x_resp_t 			                 core_v_xif_resp_i,
     // Temp
-    input  logic 				ara_idle,
-    input  logic [NrLanes-1:0]  vxsat_flag,
-    input  logic      [NrLanes-1:0][4:0] fflags_ex,
-    input  logic      [NrLanes-1:0]      fflags_ex_valid,
-    input  logic 	load_complete,
-    input  logic 	store_complete,
-    input  logic   	store_pending
+    input  logic 				                   ara_idle,
+    input  logic      [NrLanes-1:0]        vxsat_flag,
+    input  logic      [NrLanes-1:0][4:0]   fflags_ex,
+    input  logic      [NrLanes-1:0]        fflags_ex_valid,
+    input  logic 	                         load_complete,
+    input  logic 	                         store_complete,
+    input  logic   	                       store_pending
 	);
 
   logic                         csr_stall;
@@ -51,28 +51,46 @@ module ara_xif_handler #(
   // Second dispatcher to handle pre decoding
   x_resp_t  core_v_xif_resp_decoder2;
   x_req_t   core_v_xif_req_decoder2;
-  ara_pre_decoder #(
-    .NrLanes(NrLanes),
-    .x_req_t (x_req_t),
-    .x_resp_t (x_resp_t),
+  // ara_pre_decoder #(
+  //   .NrLanes(NrLanes),
+  //   .x_req_t (x_req_t),
+  //   .x_resp_t (x_resp_t),
+  //   .x_issue_req_t(x_issue_req_t),
+  //   .x_issue_resp_t(x_issue_resp_t),
+  //   .x_acc_resp_t(x_acc_resp_t),
+  //   .csr_sync_t (csr_sync_t)
+  // ) i_pre_decoder (
+  //   .clk_i              (clk_i           ),
+  //   .rst_ni             (rst_ni          ),
+  //   // Interface with the sequencer
+  //   .ara_req_ready_i    (core_v_xif_req_decoder2.issue_valid),
+  //   .ara_idle_i         (ara_idle        ),
+  //   // XIF
+  //   .core_v_xif_req_i  (core_v_xif_req_decoder2),
+  //   .core_v_xif_resp_o (core_v_xif_resp_decoder2),
+  //   // CSR sync
+  //   .sync_i            (core_v_xif_req_i.commit_valid && core_v_xif_req_i.commit_commit_kill),
+  //   .csr_sync_i        (csr_sync_i          ),
+  //   .csr_stall_o       (csr_stall         )
+  // );
+  x_issue_req_t lw_req;
+  x_issue_resp_t lw_resp;
+  assign lw_req.instr   = core_v_xif_req_decoder2.issue_req_instr;
+  assign lw_req.hartid  = core_v_xif_req_decoder2.issue_req_hartid;
+  assign lw_req.id      = core_v_xif_req_decoder2.issue_req_id;
+  assign core_v_xif_resp_decoder2.issue_resp_accept        = lw_resp.accept;
+  assign core_v_xif_resp_decoder2.issue_resp_writeback     = lw_resp.writeback;
+  assign core_v_xif_resp_decoder2.issue_resp_register_read = lw_resp.register_read;
+  assign core_v_xif_resp_decoder2.issue_resp_is_vfp        = lw_resp.is_vfp;
+  ara_lw_decoder #(
     .x_issue_req_t(x_issue_req_t),
-    .x_issue_resp_t(x_issue_resp_t),
-    .x_acc_resp_t(x_acc_resp_t),
-    .csr_sync_t (csr_sync_t)
-  ) i_pre_decoder (
-    .clk_i              (clk_i           ),
-    .rst_ni             (rst_ni          ),
-    // Interface with the sequencer
-    .ara_req_ready_i    (core_v_xif_req_decoder2.issue_valid),
-    .ara_idle_i         (ara_idle        ),
-    // XIF
-    .core_v_xif_req_i  (core_v_xif_req_decoder2),
-    .core_v_xif_resp_o (core_v_xif_resp_decoder2),
-    // CSR sync
-    .sync_i            (core_v_xif_req_i.commit_valid && core_v_xif_req_i.commit_commit_kill),
-    .csr_sync_i        (csr_sync_i          ),
-    .csr_stall_o       (csr_stall         )
+    .x_issue_resp_t(x_issue_resp_t)
+  ) i_lw_decoder (
+    .issue_req_i(lw_req),
+    .issue_resp_o(lw_resp),
+    .instruction_o()
   );
+
 
   logic new_instr;
   logic load_next_instr;
