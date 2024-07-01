@@ -21,10 +21,10 @@ module ara_xif_handler #(
     parameter type 		csr_sync_t 				= logic,
     parameter type 		instr_pack_t 			= logic
 	) (
-  	// Clock and Reset
+    // Clock and Reset
   	input logic 				                   clk_i,
   	input logic 				                   rst_ni,
-  	// XIF
+    // XIF
   	input  x_req_t            	           core_v_xif_req_i,
     output x_resp_t           	           core_v_xif_resp_o,
     // <-> Ara Dispatcher
